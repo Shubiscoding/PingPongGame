@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <string.h>
+#include <SFML/Audio.hpp>
 
 const int width = 800;
 const int height = 400; 
@@ -35,17 +36,23 @@ int main()
 	bool mQuit = false;
 	bool backtomenu = false;
 	bool backtogame = false; 
+	bool isplaying = false; 
 	int Max_score = 5;
 
 	//making all the objects
+	//rectangles
 	sf::RectangleShape player1; 
 	sf::RectangleShape player2; 
 	sf::RectangleShape ball; 
 	sf::RectangleShape Line;
 	sf::RectangleShape StartBox;
 	sf::RectangleShape QuitBox;
+
+	//fonts 
 	sf::Font MenuFont;
 	sf::Font BasicFont;
+
+	//Text
 	sf::Text Player1Stext(BasicFont); 
 	sf::Text Player2Stext(BasicFont); 
 	sf::Text TitleText(MenuFont);
@@ -55,6 +62,19 @@ int main()
 	sf::Text WinnerText(BasicFont); 
 	sf::Text DefaultText(BasicFont);
 	sf::Text AfterText(BasicFont);
+
+	//sound buffers
+	sf::SoundBuffer bClick; 
+	sf::SoundBuffer bEndgame;
+	sf::SoundBuffer bHitting;
+	sf::SoundBuffer bMicrowave; 
+	sf::Music BgMusic; 
+
+	// sound
+	sf::Sound sClick(bClick);
+	sf::Sound sEndgame(bEndgame);
+	sf::Sound sHitting(bHitting);
+	sf::Sound sMicrowave(bMicrowave);
 
 	//Default parameters Player 1 
 	player1.setSize(PlayerSize);
@@ -80,6 +100,31 @@ int main()
 	{
 		std::cout << "Font not loaded!";
 	};
+
+	if (!bClick.loadFromFile("C:\\Users\\91813\\source\\repos\\SFML_practise\\SFML_practise\\audio\\click.wav"))
+	{
+		std::cout << 0;
+	}
+	if (!bEndgame.loadFromFile("C:\\Users\\91813\\source\\repos\\SFML_practise\\SFML_practise\\audio\\end game.wav"))
+	{
+		std::cout << 0;
+	}
+	if (!bHitting.loadFromFile("C:\\Users\\91813\\source\\repos\\SFML_practise\\SFML_practise\\audio\\hitting.wav"))
+	{
+		std::cout << 0;
+	}
+	if (!bMicrowave.loadFromFile("C:\\Users\\91813\\source\\repos\\SFML_practise\\SFML_practise\\audio\\mircowave.wav"))
+	{
+		std::cout << 0;
+	}
+	if (!BgMusic.openFromFile("C:\\Users\\91813\\source\\repos\\SFML_practise\\SFML_practise\\audio\\Gotta Catch That Unicorn.wav"))
+	{
+		std::cout << 0;
+	}
+
+	//sound
+	sClick.setVolume(50.0f);
+	sEndgame.setVolume(50.0f);
 
 	// Drawing each of the Menus
 	
@@ -234,6 +279,11 @@ int main()
 
 		if (GS == MENU)
 		{
+			if (isplaying == false)
+			{
+				isplaying = true;
+				BgMusic.play();
+			}
 			window.clear();
 			ShowDefaultScreen = true; 
 			if (StartBox.getGlobalBounds().contains(MouseLocationRelative))
@@ -242,6 +292,7 @@ int main()
 				StartBox.setFillColor(sf::Color::White);
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Button()))
 				{
+					sClick.play();
 					GS = LOADING;
 				}
 			}
@@ -258,6 +309,7 @@ int main()
 
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Button()))
 				{
+					sClick.play();
 					mQuit = true; 
 				}
 			}
@@ -278,6 +330,12 @@ int main()
 
 		else if (GS == LOADING)
 		{
+			if (isplaying == true)
+			{
+				isplaying = false; 
+				BgMusic.stop();
+			}
+			sMicrowave.play();
 			window.clear();
 			window.draw(LoadingText);
 			window.display();
@@ -286,6 +344,11 @@ int main()
 		}
 
 		else if (GS == PLAYING) {
+			if (isplaying == true)
+			{
+				isplaying = false;
+				BgMusic.stop();
+			}
 			window.clear();
 			if (Player1Score == Max_score || Player2Score == Max_score)
 			{
@@ -330,6 +393,7 @@ int main()
 			//collision checking 
 			if (fPlayer1GlobalBounds.findIntersection(fBallGlobalBounds))
 			{
+				sHitting.play();
 				Increase_x = std::abs(Increase_x);
 
 				if (GetCenterBall > GetCenterPlayer1)
@@ -343,6 +407,7 @@ int main()
 			}
 			if (fPlayer2GlobalBounds.findIntersection(fBallGlobalBounds))
 			{
+				sHitting.play();
 				Increase_x = -std::abs(Increase_x);
 
 				if (GetCenterBall > GetCenterPlayer2)
@@ -358,17 +423,20 @@ int main()
 			// Bottom collision
 			if (vBallPosition.y >= height)
 			{
+				sHitting.play();
 				Increase_y = -std::abs(Increase_y);
 			}
 			// Top collision
 			if (vBallPosition.y <= 0.0)
 			{
+				sHitting.play();
 				Increase_y = std::abs(Increase_y);
 			}
 
 			//score
 			if (vBallPosition.x <= 0.0f)
 			{
+				sHitting.play();
 				Player2Score += 1;
 				Player2Stext.setString(std::to_string(Player2Score));
 				Increase_x = std::abs(Increase_x);
@@ -384,6 +452,7 @@ int main()
 			}
 			if (vBallPosition.x >= width)
 			{
+				sHitting.play();
 				Player1Score += 1;
 				Increase_x = -std::abs(Increase_x);
 				Player1Stext.setString(std::to_string(Player1Score));
@@ -424,6 +493,13 @@ int main()
 
 		else if (GS == SCORE)
 		{
+			if (isplaying == true)
+			{
+				isplaying = false;
+				BgMusic.stop();
+			}
+			sEndgame.play();
+
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Enter))
 			{
 				backtogame = true;
